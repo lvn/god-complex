@@ -6,6 +6,8 @@ from .noise_util import NoiseUtil
 from .print_util import PrintUtil
 from .terraform import Terraform
 from .directions import Directions
+from .biome import Biome
+from .geometry import Geometry
 
 MAX_NUM_ATTEMPTS = 1000
 MAX_NUM_RIVERS = 30
@@ -39,7 +41,10 @@ class World:
             lambda x, y: self._get_layer_value(name, x, y))
 
     def _get_layer_value(self, name, x, y):
-        return getattr(self, name)[y][x]
+        try:
+            return getattr(self, name)[y][x]
+        except AttributeError:
+            return None
 
     def _set_layer_value(self, name, x, y, val):
         getattr(self, name)[y][x] = val
@@ -95,18 +100,19 @@ class World:
         # cells). the moisture value exponentially decays as distance increases.
         # cells are traversed using BFS from river tiles to ensure that we visit
         # higher-moisture tiles first.
-        q = [(cell, 0) for cell in self._all_cells()
+        q = [(cell, cell) for cell in self._all_cells()
             if self.get_moisture(*cell)]
         visited = set()
         while q:
-            cell, dist = q.pop(0)
+            cell, src = q.pop(0)
             if (cell in visited or
                 not Terraform.get_height_class(self.get_elevation(*cell))):
                 continue
             visited.add(cell)
+            dist = Geometry.distance_2d(cell, src)
             self.set_moisture(*cell, val=max(1, int((MOISTURE_FACTOR ** dist) / MOISTURE_CLASS)))
             for neighbor in self.get_neighbors(*cell):
-                q.append((neighbor, dist + 1))
+                q.append((neighbor, src))
         return self
 
     # generates rivers using the droplet algorithm.
@@ -122,6 +128,15 @@ class World:
                     curdir = Directions.random()
                     next_cell = self.get_neighbor(*curpos, direction=curdir)
                 curpos = next_cell
+        return self
+
+    def init_biomes(self):
+        self._add_layer('biome',
+            full_layer=[[Biome.determine_biome(
+                latitude=self.get_latitude(y=y),
+                elevation=self.get_elevation(x, y),
+                moisture=self.get_moisture(x, y)
+            ) for x in range(self.width)] for y in range(self.height)])
         return self
 
     def init_resources(self):
