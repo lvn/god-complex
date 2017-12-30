@@ -24,7 +24,6 @@ if __name__ == '__main__':
     PrintUtil.print_terrain(world)
     print('========================')
 
-
-    Image.fromarray(numpy.asarray(world.terrain) * 255) \
+    Image.fromarray(numpy.asarray(world.elevation) * 255) \
         .convert('RGB') \
         .save('test.bmp')
