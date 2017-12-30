@@ -13,15 +13,23 @@ class PrintUtil:
         if moisture > 5:
             return '≈'
 
+        biome = world._get_layer_value('biome', x, y)
+        if biome == Biome.TEMPERATE_FOREST or biome == Biome.WOODLAND:
+            return random.choice('♠♣♣♠')
+        if biome == Biome.GRASSLAND:
+            return random.choice(',')
+        if biome == Biome.DESERT:
+            return random.choice('~≈')
+
         height_class = Terraform.get_height_class(world.get_elevation(x, y))
         if height_class == 0:
             return '≈'
         elif height_class == 2:
-            return random.choice(['⌢', '⌒'])
+            return random.choice('⌢⌒')
         elif height_class >= 3:
             return random.choice('▲▲^')
         else:
-            return ','
+            return '.'
 
     @staticmethod
     def color_tile(world, x, y):
@@ -38,7 +46,7 @@ class PrintUtil:
         if biome == Biome.TAIGA:
             return 109
         if biome == Biome.GRASSLAND:
-            return 40
+            return 'green'
         if biome == Biome.WOODLAND:
             return 22
         if biome == Biome.SHRUBLAND:

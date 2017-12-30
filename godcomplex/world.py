@@ -118,7 +118,7 @@ class World:
     # generates rivers using the droplet algorithm.
     def init_rivers(self):
         for i in range(random.randint(MAX_NUM_RIVERS / 2, MAX_NUM_RIVERS)):
-            source = self.random_cell(min_elevation=0.7)
+            source = self.random_cell(min_elevation=0.6)
             curdir = Directions.random()
             curpos = source
             while curpos and self.get_elevation(*curpos) > Terraform.WATER_THRESHOLD:
