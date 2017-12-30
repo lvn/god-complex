@@ -68,10 +68,13 @@ class World:
             num_attempts += 1
         return (x, y)
 
-    def get_neighbors(self, x, y):
+    def get_neighbors(self, x, y, diagonals=False):
         adjacent_x = [(x - 1) % self.width, x, (x + 1) % self.width]
-        adjacent_y = [yi for yi in [y - 1, y, y + 1] if yi >= 0 and yi < self.height]
-        return itertools.product(adjacent_x, adjacent_y)
+        adjacent_y = [yi for yi in [y - 1, y, y + 1]
+            if yi >= 0 and yi < self.height]
+        return [coord for coord in itertools.product(adjacent_x, adjacent_y)
+            if coord != (x, y) and
+            (diagonals or (coord[0] == x or coord[1] == y))]
 
     def get_elevation(self, x, y):
         return self._get_layer_value('terrain', x, y)
@@ -118,16 +121,24 @@ class World:
     # generates rivers using the droplet algorithm.
     def init_rivers(self):
         for i in range(random.randint(MAX_NUM_RIVERS / 2, MAX_NUM_RIVERS)):
-            source = self.random_cell(min_elevation=0.6)
-            curdir = Directions.random()
+            source = self.random_cell(min_elevation=0.75)
             curpos = source
+            prev = None
             while curpos and self.get_elevation(*curpos) > Terraform.WATER_THRESHOLD:
                 self.set_moisture(*curpos, val=1.0)
-                next_cell = self.get_neighbor(*curpos, direction=curdir)
-                if not next_cell or self.get_elevation(*next_cell) >= self.get_elevation(*curpos):
-                    curdir = Directions.random()
-                    next_cell = self.get_neighbor(*curpos, direction=curdir)
-                curpos = next_cell
+                neighbors = [neighbor for neighbor
+                    in self.get_neighbors(*curpos)
+                    if (self.get_elevation(*neighbor) < self.get_elevation(*curpos)
+                        and not self.get_moisture(*neighbor))]
+
+                if not neighbors and prev:
+                    curpos = prev
+                    prev = None
+                elif neighbors:
+                    curpos = random.choice(neighbors)
+                    prev = curpos
+                else:
+                    break
         return self
 
     def init_biomes(self):

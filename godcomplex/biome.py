@@ -20,7 +20,7 @@ class Biome:
     @staticmethod
     def _estimate_avg_temperature(latitude, elevation):
         latitude_temp = 30 - (40 * (math.sin(math.radians(latitude)) ** 2))
-        elevation_temp = (elevation - Terraform.WATER_THRESHOLD) * -80
+        elevation_temp = (elevation - Terraform.WATER_THRESHOLD) * -65
 
         return latitude_temp + elevation_temp
 
