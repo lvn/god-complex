@@ -17,7 +17,6 @@ class Biome:
 
     # celsius, because I am canadian.
     # formula stolen from: http://davidwaltham.com/global-warming-model/
-    # TODO: actually account for elevation
     @staticmethod
     def _estimate_avg_temperature(latitude, elevation):
         latitude_temp = 30 - (40 * (math.sin(math.radians(latitude)) ** 2))
