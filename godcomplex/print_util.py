@@ -6,15 +6,14 @@ from .terraform import Terraform
 
 class PrintUtil:
     @staticmethod
-    def get_height_class(h):
-        if h <= Terraform.WATER_THRESHOLD:
-            return 0
-        else:
-            return int(math.ceil((h - Terraform.WATER_THRESHOLD) / 0.15))
+    def render_tile(world, x, y):
+        try:
+            if world.get_moisture(x, y) > 5:
+                return '≈'
+        except AttributeError:
+            pass
 
-    @staticmethod
-    def render_tile(h):
-        height_class = PrintUtil.get_height_class(h)
+        height_class = Terraform.get_height_class(world.get_elevation(x, y))
         if height_class == 0:
             return ' '
         elif height_class == 2:
@@ -27,15 +26,14 @@ class PrintUtil:
     @staticmethod
     def print_digit_layer(world, layer_name):
         print('\n'.join([
-            ''.join([str(world._get_layer_value(layer_name, x, y) or ' ')
+            ''.join([str(int(world._get_layer_value(layer_name, x, y)) or ' ')
                 for x in range(world.width)]) for y in range(world.height)]))
 
     @staticmethod
-    def print_terrain(terrain):
+    def print_terrain(world):
         print('\n'.join([
-            ''.join([
-                PrintUtil.render_tile(h) for h in row
-            ]) for row in terrain]))
+            ''.join([PrintUtil.render_tile(world, x, y)
+                for x in range(world.width)]) for y in range(world.height)]))
 
     @staticmethod
     def print_height_classes(terrain):

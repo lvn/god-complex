@@ -1,13 +1,16 @@
 
 import itertools
 import random
+import math
 from .noise_util import NoiseUtil
 from .print_util import PrintUtil
 from .terraform import Terraform
 from .directions import Directions
 
 MAX_NUM_ATTEMPTS = 1000
-MAX_NUM_RIVERS = 20
+MAX_NUM_RIVERS = 30
+MOISTURE_FACTOR = 0.95
+MOISTURE_CLASS = 0.16
 
 # A World is essentially a collection of "layers". Conceptually, a layer is a
 # two-dimensional key-value map in which each value represents some
@@ -44,6 +47,9 @@ class World:
     def _all_cells(self):
         return itertools.product(range(self.width), range(self.height))
 
+    def get_latitude(self, x=0, y=0):
+        return 90 * (abs(y - (self.height / 2)) / (self.height / 2))
+
     def random_cell(self, min_elevation=Terraform.WATER_THRESHOLD):
         h = 0
         num_attempts = 0
@@ -58,8 +64,8 @@ class World:
         return (x, y)
 
     def get_neighbors(self, x, y):
-        adjacent_x = [(x - 1) % self.width, (x + 1) % self.width]
-        adjacent_y = [yi for yi in [y - 1, y + 1] if yi >= 0 and yi < self.height]
+        adjacent_x = [(x - 1) % self.width, x, (x + 1) % self.width]
+        adjacent_y = [yi for yi in [y - 1, y, y + 1] if yi >= 0 and yi < self.height]
         return itertools.product(adjacent_x, adjacent_y)
 
     def get_elevation(self, x, y):
@@ -77,45 +83,40 @@ class World:
         return None
 
     def init_terrain(self):
-        print('Generating terrain...')
         self._add_layer('terrain',
             full_layer=Terraform.simplex(self.width, self.height))
-        PrintUtil.print_terrain(self.terrain)
         return self
 
     def init_moisture(self):
-        print('Generating moisture...')
         self._add_layer('moisture')
         self.init_rivers()
 
-        # do some kind of bfs to set moisture values
-        q = [(cell, 9) for cell in self._all_cells()
-            if self.get_moisture(*cell) == 9]
+        # assign moisture values based on distance from moisture (i.e. river
+        # cells). the moisture value exponentially decays as distance increases.
+        # cells are traversed using BFS from river tiles to ensure that we visit
+        # higher-moisture tiles first.
+        q = [(cell, 0) for cell in self._all_cells()
+            if self.get_moisture(*cell)]
         visited = set()
         while q:
-            cell, value = q.pop(0)
+            cell, dist = q.pop(0)
             if (cell in visited or
-                value <= 0 or
-                ):
+                not Terraform.get_height_class(self.get_elevation(*cell))):
                 continue
             visited.add(cell)
-            self.set_moisture(*cell, val=int(value))
+            self.set_moisture(*cell, val=max(1, int((MOISTURE_FACTOR ** dist) / MOISTURE_CLASS)))
             for neighbor in self.get_neighbors(*cell):
-                q.append((neighbor, value - 0.5))
-
-        PrintUtil.print_digit_layer(self, 'moisture')
+                q.append((neighbor, dist + 1))
         return self
 
     # generates rivers using the droplet algorithm.
     def init_rivers(self):
         for i in range(random.randint(MAX_NUM_RIVERS / 2, MAX_NUM_RIVERS)):
-            source = self.random_cell()
+            source = self.random_cell(min_elevation=0.7)
             curdir = Directions.random()
             curpos = source
             while curpos and self.get_elevation(*curpos) > Terraform.WATER_THRESHOLD:
-                # temp hack: set to water by making height 0
-                self.set_elevation(*curpos, elevation=0.0)
-                self.set_moisture(*curpos, val=9)
+                self.set_moisture(*curpos, val=1.0)
                 next_cell = self.get_neighbor(*curpos, direction=curdir)
                 if not next_cell or self.get_elevation(*next_cell) >= self.get_elevation(*curpos):
                     curdir = Directions.random()

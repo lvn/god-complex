@@ -11,6 +11,13 @@ class Terraform:
     WATER_THRESHOLD = 0.53
 
     @staticmethod
+    def get_height_class(h):
+        if h <= Terraform.WATER_THRESHOLD:
+            return 0
+        else:
+            return int(math.ceil((h - Terraform.WATER_THRESHOLD) / 0.15))
+
+    @staticmethod
     def simplex(width, height):
         base = random.randint(0, 10000)
         x0 = random.randint(0, 100000)
