@@ -43,12 +43,6 @@ class World(LayerCollection):
             if coord != (x, y) and
             (diagonals or (coord[0] == x or coord[1] == y))]
 
-    def get_elevation(self, x, y):
-        return self._get_layer_value('terrain', x, y)
-
-    def set_elevation(self, x, y, elevation):
-        self._set_layer_value('terrain', x, y, elevation)
-
     def get_neighbor(self, x, y, direction):
         dx, dy = direction
         xi, yi = (x + dx) % self.width, y + dy
@@ -58,7 +52,7 @@ class World(LayerCollection):
         return None
 
     def init_terrain(self):
-        self._add_layer('terrain',
+        self._add_layer('elevation',
             full_layer=Terraform.simplex(self.width, self.height))
         return self
 
