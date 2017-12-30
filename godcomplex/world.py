@@ -8,49 +8,16 @@ from .terraform import Terraform
 from .directions import Directions
 from .biome import Biome
 from .geometry import Geometry
+from .layer import LayerCollection
 
 MAX_NUM_ATTEMPTS = 1000
 MAX_NUM_RIVERS = 30
 MOISTURE_FACTOR = 0.95
 MOISTURE_CLASS = 0.16
 
-# A World is essentially a collection of "layers". Conceptually, a layer is a
-# two-dimensional key-value map in which each value represents some
-# attribute about the world in a specific location (or *cell*).
-# for easy ser/de purposes (eventually!), layers should be managed through the
-# _add_layer, _get_layer_value, _set_layer_value API.
-
-class World:
+class World(LayerCollection):
     def __init__(self, width=250, height=60):
-        self.width = width
-        self.height = height
-        self.layers = set()
-
-    def _add_layer(self, name, full_layer=None, defaultval=0.0):
-        layer = full_layer or [[defaultval for x in range(self.width)]
-            for y in range(self.height)]
-        setattr(self, name, layer)
-        self.layers.add(name)
-
-        # HACK: adding helper methods to make code cleaner.
-        # It's a bit unfortunate that the set of layers will be a bit implicit,
-        # but I think it's fine for now.
-        setattr(self, 'set_{}'.format(name),
-            lambda x, y, val: self._set_layer_value(name, x, y, val))
-        setattr(self, 'get_{}'.format(name),
-            lambda x, y: self._get_layer_value(name, x, y))
-
-    def _get_layer_value(self, name, x, y):
-        try:
-            return getattr(self, name)[y][x]
-        except AttributeError:
-            return None
-
-    def _set_layer_value(self, name, x, y, val):
-        getattr(self, name)[y][x] = val
-
-    def _all_cells(self):
-        return itertools.product(range(self.width), range(self.height))
+        super().__init__(width, height)
 
     def get_latitude(self, x=0, y=0):
         return 90 * (abs(y - (self.height / 2)) / (self.height / 2))
