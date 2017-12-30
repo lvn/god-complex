@@ -11,12 +11,11 @@ from .geometry import Geometry
 from .layer import LayerCollection
 
 MAX_NUM_ATTEMPTS = 1000
-MAX_NUM_RIVERS = 30
 MOISTURE_FACTOR = 0.95
 MOISTURE_CLASS = 0.16
 
 class World(LayerCollection):
-    def __init__(self, width=250, height=60):
+    def __init__(self, width=300, height=60):
         super().__init__(width, height)
 
     def get_latitude(self, x=0, y=0):
@@ -81,25 +80,26 @@ class World(LayerCollection):
 
     # generates rivers using the droplet algorithm.
     def init_rivers(self):
-        for i in range(random.randint(MAX_NUM_RIVERS / 2, MAX_NUM_RIVERS)):
-            source = self.random_cell(min_elevation=0.75)
+        max_num_rivers = (self.width * self.height) // 700
+
+        for i in range(max_num_rivers):
+            source = self.random_cell(min_elevation=0.8)
             curpos = source
-            prev = None
+            curdir = Directions.random()
+            curelev = self.get_elevation(*source)
             while curpos and self.get_elevation(*curpos) > Terraform.WATER_THRESHOLD:
                 self.set_moisture(*curpos, val=1.0)
-                neighbors = [neighbor for neighbor
-                    in self.get_neighbors(*curpos)
-                    if (self.get_elevation(*neighbor) < self.get_elevation(*curpos)
-                        and not self.get_moisture(*neighbor))]
 
-                if not neighbors and prev:
-                    curpos = prev
-                    prev = None
-                elif neighbors:
-                    curpos = random.choice(neighbors)
-                    prev = curpos
-                else:
-                    break
+                next_cell = self.get_neighbor(*curpos, direction=curdir)
+                if not next_cell or self.get_elevation(*next_cell) > self.get_elevation(*curpos):
+                    directions = [d for d in Directions.all()
+                        if self.get_neighbor(*curpos, direction=d) and not self.get_moisture(*self.get_neighbor(*curpos, direction=d))]
+                    if not directions:
+                        break
+                    curdir = random.choice(directions)
+                    next_cell = self.get_neighbor(*curpos, direction=curdir)
+
+                curpos = next_cell
         return self
 
     def init_biomes(self):

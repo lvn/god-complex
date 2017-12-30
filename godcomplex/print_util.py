@@ -11,15 +11,8 @@ class PrintUtil:
     def render_tile(world, x, y):
         moisture = world._get_layer_value('moisture', x, y) or 0
         if moisture > 5:
-            return '≈'
-
-        biome = world._get_layer_value('biome', x, y)
-        if biome == Biome.TEMPERATE_FOREST or biome == Biome.WOODLAND:
-            return random.choice('♠♣♣♠')
-        if biome == Biome.GRASSLAND:
-            return random.choice(',')
-        if biome == Biome.DESERT:
-            return random.choice('~≈')
+            return '~'
+        height_class = Terraform.get_height_class(world.get_elevation(x, y))
 
         height_class = Terraform.get_height_class(world.get_elevation(x, y))
         if height_class == 0:
@@ -28,8 +21,26 @@ class PrintUtil:
             return random.choice('⌢⌒')
         elif height_class >= 3:
             return random.choice('▲▲^')
-        else:
-            return '.'
+
+        biome = world._get_layer_value('biome', x, y)
+        if biome == Biome.TEMPERATE_FOREST or biome == Biome.WOODLAND:
+            return random.choice('♠♣')
+        if biome == Biome.WOODLAND:
+            return random.choice(',.,♠♣')
+        if biome == Biome.RAINFOREST:
+            return random.choice('♠')
+        if biome == Biome.GRASSLAND:
+            return random.choice(',.')
+        if biome == Biome.SAVANNAH:
+            return random.choice('τ..')
+        if biome == Biome.DESERT:
+            return random.choice('~≈')
+        if biome == Biome.SWAMP:
+            return random.choice('"⌠')
+        if biome == Biome.TAIGA:
+            return '↑'
+
+        return '.'
 
     @staticmethod
     def color_tile(world, x, y):
@@ -41,18 +52,22 @@ class PrintUtil:
         if moisture > 5:
             return 27
 
+        if biome == Biome.MOUNTAIN:
+            return 7
         if biome == Biome.TUNDRA:
-            return 87
+            return 14
         if biome == Biome.TAIGA:
-            return 109
+            return 34
         if biome == Biome.GRASSLAND:
-            return 'green'
+            return 22
         if biome == Biome.WOODLAND:
             return 22
         if biome == Biome.SHRUBLAND:
             return 65
         if biome == Biome.TEMPERATE_FOREST:
             return 22
+        if biome == Biome.SWAMP:
+            return 28
         if biome == Biome.TEMPERATE_RAINFOREST:
             return 23
         if biome == Biome.RAINFOREST:
@@ -60,7 +75,7 @@ class PrintUtil:
         if biome == Biome.DESERT:
             return 226
         if biome == Biome.SAVANNAH:
-            return 142
+            return 112
         if biome == Biome.OCEAN:
             return 18
 
