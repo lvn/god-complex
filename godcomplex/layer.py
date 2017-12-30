@@ -15,13 +15,13 @@ class LayerCollection:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.layers = set()
+        self.layers = {}
 
     def _add_layer(self, name, full_layer=None, defaultval=0.0):
         layer = full_layer or [[defaultval for x in range(self.width)]
             for y in range(self.height)]
         setattr(self, name, layer)
-        self.layers.add(name)
+        self.layers[name] = layer
 
         # HACK: adding helper methods to make code cleaner.
         # It's a bit unfortunate that the set of layers will be a bit implicit,
@@ -33,12 +33,12 @@ class LayerCollection:
 
     def _get_layer_value(self, name, x, y):
         try:
-            return getattr(self, name)[y][x]
-        except AttributeError:
+            return self.layers[name][y][x]
+        except KeyError:
             return None
 
     def _set_layer_value(self, name, x, y, val):
-        getattr(self, name)[y][x] = val
+        self.layers[name][y][x] = val
 
     def _all_cells(self):
         return itertools.product(range(self.width), range(self.height))
