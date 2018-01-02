@@ -9,14 +9,37 @@ from .directions import Directions
 from .biome import Biome
 from .geometry import Geometry
 from .layer import LayerCollection
+from .agent import AgentType, AgentActions, Agent
+from .people import People
+from .faction import Faction
 
 MAX_NUM_ATTEMPTS = 1000
 MOISTURE_FACTOR = 0.95
 MOISTURE_CLASS = 0.16
 
 class World(LayerCollection):
-    def __init__(self, width=300, height=60):
+    def __init__(self, width=300, height=60, db=None):
         super().__init__(width, height)
+        self.db = db
+        self.agents = {}
+        self.factions = {}
+        self.pending_agents = []  # pending queue, emptied at the end of every step
+        self.num_steps = 0
+
+    def get_agent(self, agent_id):
+        return self.agents[agent_id]
+
+    def add_agent(self, agent):
+        self.agents[agent.id] = agent
+
+    def add_faction(self, faction):
+        self.factions[faction.name] = faction
+
+    def add_pending_agent(self, agent):
+        self.pending_agents.append(agent)
+
+    def get_db(self):
+        return self.db
 
     def get_latitude(self, x=0, y=0):
         return 90 * (abs(y - (self.height / 2)) / (self.height / 2))
@@ -114,15 +137,47 @@ class World(LayerCollection):
     def init_resources(self):
         pass
 
-    def place_agent(self):
-        pass
+    def move_agent(self, agent, x, y):
+        if agent.position:
+            self.mutate_agent_position(*agent.position,
+                fn=lambda value: value.remove(agent.id))
+
+        self.mutate_agent_position(x, y, fn=lambda value: value.add(agent.id))
+        agent.position = (x, y)
+
+    def place_agent(self, agent):
+        agent_position = self.random_cell(min_elevation=0.6)
+        self.move_agent(agent, *agent_position)
 
     def place_structure(self):
         pass
 
     def init_peoples(self):
-        # return the "Eden agent"
+        # The agent_positions layer consists of a set of uuids representing
+        # the agents on a cell.
+        self._add_layer('agent_position',
+            full_layer=[[set() for x in range(self.width)]
+                for y in range(self.height)])
+        self._add_layer('settlement', defaultval=None)
+
+        # return the "Eden agent" (i.e. first settler) for each different
+        # people.
+        for people in People.all_peoples(self.db, self):
+            faction = Faction(people=people)
+            self.add_faction(faction)
+            agent = Agent(world=self,
+                faction=faction,
+                agent_type=AgentType.SETTLER,
+                goals=[AgentActions.settle])
+            self.add_agent(agent)
+            self.place_agent(agent)
+
         return self
 
     def step(self):
-        return self
+        for _, agent in self.agents.items():
+            agent.step()
+        while self.pending_agents:
+            self.add_agent(self.pending_agents.pop(0))
+
+        self.num_steps += 1

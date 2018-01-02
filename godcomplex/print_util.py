@@ -5,10 +5,33 @@ import random
 from colors import color
 from .terraform import Terraform
 from .biome import Biome
+from .agent import AgentType, Settlement
 
 class PrintUtil:
     @staticmethod
+    def render_activity(world, x, y):
+        if world._get_layer_value('biome', x, y) == Biome.OCEAN:
+            return color('≈', PrintUtil.color_tile(world, x, y))
+
+        agents = world._get_layer_value('agent_position', x, y)
+        if len(agents) <= 0:
+            return ' '
+        if len(agents) == 1:
+            agent = world.get_agent(list(agents)[0])
+            if isinstance(agent, Settlement):
+                return color('⌂', agent.faction.color)
+            else:
+                return color('@', agent.faction.color)
+        if len(agents) > 1:
+            return '*'
+
+        return ' '
+
+    @staticmethod
     def render_tile(world, x, y):
+        if world._get_layer_value('settlement', x, y):
+            return '⌂'
+
         moisture = world._get_layer_value('moisture', x, y) or 0
         if moisture > 5:
             return '~'
@@ -91,6 +114,16 @@ class PrintUtil:
             ''.join([color(PrintUtil.render_tile(world, x, y),
                 fg=PrintUtil.color_tile(world, x, y)) for x in range(world.width)])
                     for y in range(world.height)]))
+
+    @staticmethod
+    def print_activity(world):
+        '''
+        Prints current "activity" on the map. This consists of all structures and
+        agents.
+        '''
+        print('\n'.join([
+            ''.join([PrintUtil.render_activity(world, x, y)
+                for x in range(world.width)]) for y in range(world.height)]))
 
     @staticmethod
     def print_height_classes(terrain):

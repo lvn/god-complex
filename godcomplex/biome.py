@@ -66,3 +66,7 @@ class Biome:
                 return Biome.SAVANNAH
             else:
                 return Biome.RAINFOREST
+
+    @staticmethod
+    def is_passable(biome):
+        return biome != Biome.OCEAN and biome != Biome.MOUNTAIN

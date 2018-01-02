@@ -30,6 +30,8 @@ class LayerCollection:
             lambda x, y, val: self._set_layer_value(name, x, y, val))
         setattr(self, 'get_{}'.format(name),
             lambda x, y: self._get_layer_value(name, x, y))
+        setattr(self, 'mutate_{}'.format(name),
+            lambda x, y, fn: self._mutate_layer_value(name, x, y, fn))
 
     def _get_layer_value(self, name, x, y):
         try:
@@ -39,6 +41,9 @@ class LayerCollection:
 
     def _set_layer_value(self, name, x, y, val):
         self.layers[name][y][x] = val
+
+    def _mutate_layer_value(self, name, x, y, fn):
+        fn(self.layers[name][y][x])
 
     def _all_cells(self):
         return itertools.product(range(self.width), range(self.height))
