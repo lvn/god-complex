@@ -29,8 +29,9 @@ class PrintUtil:
 
     @staticmethod
     def render_tile(world, x, y):
-        if world._get_layer_value('settlement', x, y):
-            return '⌂'
+        settlement = world._get_layer_value('settlement', x, y)
+        if settlement:
+            return color('⌂', settlement.faction.color)
 
         moisture = world._get_layer_value('moisture', x, y) or 0
         if moisture > 5:
