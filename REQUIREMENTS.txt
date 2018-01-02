@@ -1,0 +1,5 @@
+ansicolors==1.1.8
+noise==1.2.2
+numpy==1.13.3
+olefile==0.44
+Pillow==4.3.0
