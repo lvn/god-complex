@@ -5,6 +5,8 @@ import numpy
 from PIL import Image
 import sqlite3
 
+MAX_HISTORY_SHOWN = 30
+
 if __name__ == '__main__':
     db = sqlite3.connect('file:worldgen.db?mode=ro', uri=True)
     world = World(db=db)
@@ -39,6 +41,9 @@ if __name__ == '__main__':
         elif cmd.startswith('se'):
             print('\n'.join([str(a) for a in world.agents.values() if a.agent_type == 'SETTLEMENT']))
             input()
+        elif cmd.startswith('h'):
+            print('\n'.join([str(e) for e in world.history.events[-MAX_HISTORY_SHOWN:]]))
+            input()
         elif cmd.startswith('a'):
             current_view = 'activity'
         elif cmd.startswith('t'):
@@ -50,12 +55,13 @@ if __name__ == '__main__':
         else:
             world.step()
 
-        print('\033[;HYear {}, First Age of the World\033[0K'.format(world.num_steps))
+        print('\033[;HYear {}, First Age of the World\033[0K'.format(
+            world.history.current_timestamp))
         if current_view == 'activity':
             PrintUtil.print_activity(world)
         elif current_view == 'terrain':
             PrintUtil.print_terrain(world)
 
         print('Currently in {} view. '.format(current_view) +
-            'Commands: [ag]ent list, [se]ttlement list, [a]ctivity view, [t]errain view, [g]reyscale export' +
+            'Commands: [ag]ent list, [se]ttlement list, [h]istorical events, [a]ctivity view, [t]errain view, [g]reyscale export' +
             '\033[0J')

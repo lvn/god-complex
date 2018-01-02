@@ -12,6 +12,7 @@ from .layer import LayerCollection
 from .agent import AgentType, AgentActions, Agent
 from .people import People
 from .faction import Faction
+from .history import History
 
 MAX_NUM_ATTEMPTS = 1000
 MOISTURE_FACTOR = 0.95
@@ -24,7 +25,7 @@ class World(LayerCollection):
         self.agents = {}
         self.factions = {}
         self.pending_agents = []  # pending queue, emptied at the end of every step
-        self.num_steps = 0
+        self.history = History()
 
     def get_agent(self, agent_id):
         return self.agents[agent_id]
@@ -176,8 +177,10 @@ class World(LayerCollection):
 
     def step(self):
         for _, agent in self.agents.items():
-            agent.step()
-        while self.pending_agents:
-            self.add_agent(self.pending_agents.pop(0))
+            self.history.record(agent, *agent.step())
 
-        self.num_steps += 1
+        for agent in self.pending_agents:
+            self.add_agent(agent)
+            self.history.record(agent, AgentActions.spawn)
+
+        self.history.advance()

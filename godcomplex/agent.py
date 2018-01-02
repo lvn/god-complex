@@ -3,9 +3,9 @@ import uuid
 import random
 from .biome import Biome
 
-class AgentActionException(Exception): pass
+class AgentActionFailed(Exception): pass
 
-class PrerequisiteActionsNeeded(AgentActionException):
+class PrerequisiteActionsNeeded(AgentActionFailed):
     def __init__(self, *deps):
         self.dependencies = deps
 
@@ -17,6 +17,9 @@ class AgentType:
 SETTLE_RADIUS = 5
 
 class AgentActions:
+    def spawn(agent, **kwargs):
+        pass
+
     def wander(agent, **kwargs):
         if agent.agent_type == AgentType.SETTLEMENT:
             return
@@ -92,17 +95,16 @@ class Agent:
         self.position = (x, y)
 
     def step(self):
-        # process the workqueue.
-        if not self.queue:
-            return AgentActions.wander(self)
-
-        action = self.queue.pop(0)
+        action = self.queue.pop(0) if len(self.queue) else AgentActions.wander
         try:
             result = action(self)
         except PrerequisiteActionsNeeded as e:
             self.queue = list(e.dependencies) + [action] + self.queue
-        except AgentActionException as e:
-            pass
+            return (action, e)
+        except AgentActionFailed as e:
+            return (action, e)
+
+        return (action, None)
 
 class Settlement(Agent):
     def __init__(self, world, agent_type, origin=None, faction=None,
@@ -137,7 +139,7 @@ class Settlement(Agent):
 
     def step(self):
         self.grow()
-        super().step()
+        return super().step()
 
     def __repr__(self):
         return super().__repr__('pop={} resources={}'.format(
