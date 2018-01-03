@@ -175,6 +175,12 @@ class World(LayerCollection):
 
         return self
 
+    def init_all(self):
+        self.init_terrain()
+        self.init_moisture()
+        self.init_biomes()
+        self.init_peoples()
+
     def step(self):
         for _, agent in self.agents.items():
             self.history.record(agent, *agent.step())
