@@ -53,6 +53,7 @@ class AgentActions:
         settlement.id = agent.id  # reuse ID -- effectively GCs current agent.
         settlement.origin = agent.origin
         settlement.position = agent.position
+        agent.faction.add_settlement(settlement)
         agent.world.add_pending_agent(settlement)
         agent.world.set_settlement(*agent.position, val=settlement)
         agent.world.move_agent(agent, *agent.position)

@@ -44,6 +44,9 @@ if __name__ == '__main__':
         elif cmd.startswith('h'):
             print('\n'.join([str(e) for e in world.history.events[-MAX_HISTORY_SHOWN:]]))
             input()
+        elif cmd.startswith('f'):
+            print('\n'.join([str(a) for a in world.factions.values()]))
+            input()
         elif cmd.startswith('a'):
             current_view = 'activity'
         elif cmd.startswith('t'):
@@ -63,5 +66,5 @@ if __name__ == '__main__':
             PrintUtil.print_terrain(world)
 
         print('Currently in {} view. '.format(current_view) +
-            'Commands: [ag]ent list, [se]ttlement list, [h]istorical events, [a]ctivity view, [t]errain view, [g]reyscale export' +
+            'Commands: [ag]ent list, [se]ttlement list, [f]action list, [h]istorical events, [a]ctivity view, [t]errain view, [g]reyscale export' +
             '\033[0J')

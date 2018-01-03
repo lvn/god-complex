@@ -11,9 +11,15 @@ class Faction:
     def __init__(self, people, name=None):
         self.people = people
         self.color = colors.pop(0)
+        self.settlements = set()
 
         # TODO: better random name generation, obviously
         self.name = 'The First Tribe of {}'.format(string.capwords(people.name))
 
+    def add_settlement(self, settlement):
+        self.settlements.add(settlement)
+
     def __repr__(self):
-        return '<Faction {}>'.format(color(self.name, self.color))
+        return '<Faction {} settlements={}>'.format(
+            color(self.name, self.color),
+            self.settlements)
