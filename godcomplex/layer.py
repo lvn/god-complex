@@ -20,7 +20,6 @@ class LayerCollection:
     def _add_layer(self, name, full_layer=None, defaultval=0.0):
         layer = full_layer or [[defaultval for x in range(self.width)]
             for y in range(self.height)]
-        setattr(self, name, layer)
         self.layers[name] = layer
 
         # HACK: adding helper methods to make code cleaner.
