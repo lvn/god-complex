@@ -1,11 +1,17 @@
 
 from godcomplex import World
 from godcomplex import PrintUtil
+from godcomplex import Navigate
 import numpy
 from PIL import Image
 import sqlite3
+from colors import color
 
 MAX_HISTORY_SHOWN = 30
+
+def print_at_cell(coord, text):
+    x, y = coord
+    print('\033[{};{}H{}'.format(y + 2, x + 1, text))
 
 if __name__ == '__main__':
     db = sqlite3.connect('file:worldgen.db?mode=ro', uri=True)
@@ -38,6 +44,26 @@ if __name__ == '__main__':
         if cmd.startswith('ag'):
             print('\n'.join([str(a) for a in world.agents.values()]))
             input()
+        elif cmd.startswith('p'):
+            try:
+                args = [int(v) for v in cmd.split()[1:]]
+                if len(args) == 2:
+                    args = args + args
+                print(args)
+                x1, y1, x2, y2 = [int(v) for v in args]
+                c1 = (x1, y1)
+                c2 = (x2, y2)
+                path = Navigate.path(world, c1, lambda _, coord: coord == c2)
+                if path:
+                    print(path)
+                    for c in path:
+                        print_at_cell(c, color('>', fg='red'))
+                else:
+                    print('No path found from', c1, 'to', c2)
+            except ValueError as e:
+                print(e)
+                print('USAGE: p <x1> <x2> <y1> <y2>')
+            input()
         elif cmd.startswith('se'):
             print('\n'.join([str(a) for a in world.agents.values() if a.agent_type == 'SETTLEMENT']))
             input()
@@ -66,5 +92,11 @@ if __name__ == '__main__':
             PrintUtil.print_terrain(world)
 
         print('Currently in {} view. '.format(current_view) +
-            'Commands: [ag]ent list, [se]ttlement list, [f]action list, [h]istorical events, [a]ctivity view, [t]errain view, [g]reyscale export' +
-            '\033[0J')
+            'Commands:' + '  '.join(['[ag]ent list',
+                '[se]ttlement list',
+                '[f]action list',
+                '[h]istorical events',
+                '[a]ctivity view',
+                '[t]errain view',
+                '[g]reyscale export',
+                '[p]ath']) + '\033[0J')

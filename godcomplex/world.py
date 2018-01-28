@@ -45,18 +45,18 @@ class World(LayerCollection):
     def get_latitude(self, x=0, y=0):
         return 90 * (abs(y - (self.height / 2)) / (self.height / 2))
 
-    def random_cell(self, min_elevation=Terraform.WATER_THRESHOLD):
+    def random_cell(self, condition=lambda c: True):
         h = 0
         num_attempts = 0
-        while h < min_elevation:
+        while True:
             if num_attempts >= MAX_NUM_ATTEMPTS:
                 raise RuntimeError(
-                    'Ran out of tries to get random cell with min_elevation={}'.format(min_elevation))
-            x = random.randint(0, self.width - 1)
-            y = random.randint(0, self.height - 1)
-            h = self.get_elevation(x, y)
+                    'Ran out of tries to get random cell with condition={}'.format(condition))
+            coord = (random.randint(0, self.width - 1),
+                random.randint(0, self.height - 1))
+            if condition(coord):
+                return coord
             num_attempts += 1
-        return (x, y)
 
     def get_neighbors(self, x, y, diagonals=False):
         adjacent_x = [(x - 1) % self.width, x, (x + 1) % self.width]
@@ -107,7 +107,8 @@ class World(LayerCollection):
         max_num_rivers = (self.width * self.height) // 700
 
         for i in range(max_num_rivers):
-            source = self.random_cell(min_elevation=0.8)
+            source = self.random_cell(
+                condition=lambda coord: self.get_elevation(*coord) >= 0.8)
             curpos = source
             curdir = Directions.random()
             curelev = self.get_elevation(*source)
@@ -147,7 +148,8 @@ class World(LayerCollection):
         agent.position = (x, y)
 
     def place_agent(self, agent):
-        agent_position = self.random_cell(min_elevation=0.6)
+        agent_position = self.random_cell(
+            condition=lambda coord: Biome.is_passable(self.get_biome(*coord)))
         self.move_agent(agent, *agent_position)
 
     def place_structure(self):
